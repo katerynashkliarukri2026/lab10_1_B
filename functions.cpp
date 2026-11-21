@@ -36,7 +36,7 @@ int InputInteger(const std::string& prompt, int minValue, int maxValue)
 // Створює динамічний масив студентів.
 Student* CreateStudents(int n)
 {
-    return new (std::nothrow) Student[n];
+    return new (std::nothrow) Student[n]();
 }
 
 // Повертає назву спеціальності.
@@ -59,7 +59,7 @@ std::string GetSpecialtyName(Specialty specialty)
     }
 }
 
-// Повертає назву третього предмета.
+// Повертає назву третього предмета для спеціальності.
 std::string GetThirdSubjectName(Specialty specialty)
 {
     switch (specialty)
@@ -88,25 +88,26 @@ void InputStudent(Student& student)
     student.mathematics = InputInteger(
         "Enter Mathematics grade (2-5): ", 2, 5);
 
-    int thirdGrade = InputInteger(
+    int grade = InputInteger(
         "Enter " + GetThirdSubjectName(student.specialty) +
         " grade (2-5): ", 2, 5);
 
     switch (student.specialty)
     {
     case ComputerScience:
-        student.thirdGrade.programming = thirdGrade;
+        student.thirdGrade.programming = grade;
         break;
     case Informatics:
-        student.thirdGrade.numericalMethods = thirdGrade;
+        student.thirdGrade.numericalMethods = grade;
         break;
     default:
-        student.thirdGrade.pedagogy = thirdGrade;
+        student.thirdGrade.pedagogy = grade;
         break;
     }
 }
 
 // Повертає оцінку студента з указаного предмета.
+// Для третього предмета враховує спеціальність студента.
 int GetGrade(const Student& student, Subject subject)
 {
     switch (subject)
@@ -115,41 +116,38 @@ int GetGrade(const Student& student, Subject subject)
         return student.physics;
     case Mathematics:
         return student.mathematics;
-    case ThirdSubject:
-        switch (student.specialty)
-        {
-        case ComputerScience:
-            return student.thirdGrade.programming;
-        case Informatics:
-            return student.thirdGrade.numericalMethods;
-        default:
-            return student.thirdGrade.pedagogy;
-        }
+    case Programming:
+        return student.specialty == ComputerScience
+            ? student.thirdGrade.programming : 0;
+    case NumericalMethods:
+        return student.specialty == Informatics
+            ? student.thirdGrade.numericalMethods : 0;
+    case Pedagogy:
+        return student.specialty != ComputerScience &&
+            student.specialty != Informatics
+            ? student.thirdGrade.pedagogy : 0;
     default:
         return 0;
     }
 }
 
-// Виводить таблицю успішності з рівними стовпцями.
+// Виводить таблицю з дев'ятьма стовпцями.
 void PrintStudents(const Student students[], int n)
 {
-    const int widths[] = { 5, 18, 8, 28, 10, 14, 22, 7 };
-    const int columns = 8;
+    const int widths[] = { 5, 16, 8, 25, 9, 12, 14, 18, 12 };
+    const int columns = 9;
 
     auto printLine = [&]()
         {
             std::cout << '|';
-
             for (int i = 0; i < columns; i++)
                 std::cout << std::string(widths[i] + 2, '-') << '|';
-
             std::cout << '\n';
         };
 
     auto printRow = [&](const std::string values[])
         {
             std::cout << '|';
-
             for (int i = 0; i < columns; i++)
             {
                 std::string value = values[i];
@@ -157,21 +155,18 @@ void PrintStudents(const Student students[], int n)
                 if (value.length() > static_cast<size_t>(widths[i]))
                     value = value.substr(0, widths[i]);
 
-                std::cout << ' '
-                    << std::left << std::setw(widths[i]) << value
-                    << ' ' << '|';
+                std::cout << ' ' << std::left
+                    << std::setw(widths[i]) << value << " |";
             }
-
             std::cout << '\n';
         };
 
     const std::string headers[] = {
-        "No.", "Surname", "Course", "Specialty",
-        "Physics", "Mathematics", "Third subject", "Grade"
+        "No.", "Surname", "Course", "Specialty", "Physics",
+        "Mathematics", "Programming", "Numerical methods", "Pedagogy"
     };
 
     std::cout << "\nSTUDENT PERFORMANCE\n";
-
     printLine();
     printRow(headers);
     printLine();
@@ -185,8 +180,12 @@ void PrintStudents(const Student students[], int n)
             GetSpecialtyName(students[i].specialty),
             std::to_string(students[i].physics),
             std::to_string(students[i].mathematics),
-            GetThirdSubjectName(students[i].specialty),
-            std::to_string(GetGrade(students[i], ThirdSubject))
+            GetGrade(students[i], Programming) == 0
+                ? "-" : std::to_string(GetGrade(students[i], Programming)),
+            GetGrade(students[i], NumericalMethods) == 0
+                ? "-" : std::to_string(GetGrade(students[i], NumericalMethods)),
+            GetGrade(students[i], Pedagogy) == 0
+                ? "-" : std::to_string(GetGrade(students[i], Pedagogy))
         };
 
         printRow(values);
@@ -216,17 +215,24 @@ bool IsGoodInPhysicsAndMath(const Student& student)
 }
 
 // Виводить прізвища студентів, які відповідають умові.
-int PrintGoodStudents(const Student students[], int n)
+void PrintGoodStudents(const Student students[], int n)
+{
+    for (int i = 0; i < n; i++)
+    {
+        if (IsGoodInPhysicsAndMath(students[i]))
+            std::cout << students[i].surname << '\n';
+    }
+}
+
+// Підраховує кількість студентів, які відповідають умові.
+int CountGoodStudents(const Student students[], int n)
 {
     int count = 0;
 
     for (int i = 0; i < n; i++)
     {
         if (IsGoodInPhysicsAndMath(students[i]))
-        {
-            std::cout << students[i].surname << '\n';
             count++;
-        }
     }
 
     return count;

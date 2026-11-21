@@ -1,15 +1,12 @@
 
 #include <iostream>
-#include <limits>
 #include "functions.h"
 
 int main()
 {
-    int n;
-
     std::cout << "STUDENT PERFORMANCE - LEVEL B\n\n";
 
-    n = InputInteger("Enter number of students (1-100): ", 1, 100);
+    int n = InputInteger("Enter number of students (1-100): ", 1, 100);
 
     Student* students = CreateStudents(n);
 
@@ -33,15 +30,26 @@ int main()
     std::cout << "Number of grade 3 in Mathematics: "
         << CountGrade(students, n, Mathematics) << '\n';
 
-    std::cout << "Number of grade 3 in the third subject: "
-        << CountGrade(students, n, ThirdSubject) << '\n';
+    std::cout << "Number of grade 3 in Programming: "
+        << CountGrade(students, n, Programming) << '\n';
 
-    std::cout << "\nStudents with grades 4 or 5 in Physics and Mathematics:\n";
+    std::cout << "Number of grade 3 in Numerical methods: "
+        << CountGrade(students, n, NumericalMethods) << '\n';
 
-    int count = PrintGoodStudents(students, n);
+    std::cout << "Number of grade 3 in Pedagogy: "
+        << CountGrade(students, n, Pedagogy) << '\n';
 
-    if (count == 0)
+    std::cout
+        << "\nStudents with grades 4 or 5 in Physics and Mathematics:\n";
+
+    if (CountGoodStudents(students, n) == 0)
+    {
         std::cout << "No students found.\n";
+    }
+    else
+    {
+        PrintGoodStudents(students, n);
+    }
 
     delete[] students;
 
